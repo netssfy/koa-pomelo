@@ -1,0 +1,40 @@
+{
+  "name": "koa-pomelo",
+  "version": "1.0.0",
+  "description": "koa web container",
+  "main": "index.js",
+  "scripts": {
+    "test": "cd test && node index"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/netssfy/koa-pomelo.git"
+  },
+  "keywords": [
+    "koa",
+    "web",
+    "container"
+  ],
+  "author": "sfy",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/netssfy/koa-pomelo/issues"
+  },
+  "homepage": "https://github.com/netssfy/koa-pomelo#readme",
+  "dependencies": {
+    "config": "^1.24.0",
+    "koa": "^1.2.4",
+    "koa-better-body": "^3.0.2",
+    "koa-qs": "^2.0.0",
+    "koa-static": "^2.0.0",
+    "lodash": "^4.17.3",
+    "moment": "^2.17.1",
+    "mongoose": "^4.7.5",
+    "request-promise": "^4.1.1",
+    "winston": "^2.3.0",
+    "winston-daily-rotate-file": "git+https://github.com/winstonjs/winston-daily-rotate-file.git"
+  },
+  "devDependencies": {
+    "koa-router": "^5.4.0"
+  }
+}

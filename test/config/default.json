@@ -1,0 +1,8 @@
+{
+  "mongo": {
+    "connection": "mongodb://localhost:27017/koa-pomelo"
+  },
+  "app": {
+    "port": 1699
+  }
+}
