@@ -6,7 +6,7 @@ const config = require('config');
 const koa = require('koa');
 const mongoose = require('mongoose');
 const co = require('co');
-const bp = require('koa-better-body');
+const bp = require('koa-bodyparser');
 
 //components
 const logger = require('./components/logger').getLogger('pomelo');
@@ -15,6 +15,7 @@ const logger = require('./components/logger').getLogger('pomelo');
 const httpTraceLog = require('./middlewares/http-trace-log');
 const errorHandler = require('./middlewares/error-handler');
 const resultFormater = require('./middlewares/result-formatter');
+const passport = require('./middlewares/passport');
 
 //static var
 var pomelo = koa();
@@ -54,8 +55,8 @@ function* init_server() {
     throw pathNotFound();
 
   require('koa-qs')(pomelo, 'strict');
+  passport(pomelo);
   pomelo.use(bp());
-
   pomelo.use(httpTraceLog);
   pomelo.use(errorHandler);
   pomelo.use(resultFormater);
