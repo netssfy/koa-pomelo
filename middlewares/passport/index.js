@@ -5,32 +5,77 @@ const LocalStrategy = require('passport-local').Strategy;
 const Router = require('koa-router');
 const logger = require('winston').getLogger('middleware/passport');
 const session = require('koa-generic-session');
+const config = require('config');
+const co = require('co');
+const _ = require('lodash');
+const mongoose = require('mongoose');
+const crypto = require('crypto');
 
-passport.serializeUser(function(user, done) {
-  done(null ,user);
-});
+const loginUrl = config.auth.url.login;
+const unauthToUrl = config.auth.url.unauth;
+const successRedirect = config.auth.url.success;
+const failureRedirect = config.auth.url.failure;
 
-passport.deserializeUser(function(user, done) {
-  done(null, user);
-});
+const modelName = _.get(config, 'auth.storage.model-name');
+const usernameFieldName = _.get(config, 'auth.storage.username-field-name');
+const passwordFieldName = _.get(config, 'auth.storage.password-field-name');
+const saltFieldName = _.get(config, 'auth.storage.salt-field-name');
 
-passport.use(new LocalStrategy(function(username, password, done) {
-  console.log(username);
-  console.log(passport);
-  done(null, user);
-}));
+exports = module.exports = function(pomelo, auth) {
+  passport.serializeUser(function(user, done) {
+    done(null ,user);
+  });
 
-const router = new Router();
-router.all('*', function* (next) {
-  logger.verbose(this.request.originUrl);
-  if (this.isAuthenticated()) {
-    yield next;
-  } else {
-    throw 'not authenticated';
-  }
-});
+  passport.deserializeUser(function(user, done) {
+    done(null, user);
+  });
 
-exports = module.exports = function(pomelo) {
+  passport.use(new LocalStrategy(function(username, password, done) {
+    co(function* () {
+      logger.info(`${username} try to login`);
+      //get model
+      let authModel = mongoose.model(modelName);
+      let user = yield authModel.findOne({ [usernameFieldName]: username});
+      if (!user) {
+        logger.warn(`${username} is not found`);
+        return done(null, false);
+      }
+      //get salt and use salt and param to gen the password
+      if (_.isEmpty(password)) {
+        logger.error(`${username} password is empty`);
+        return done(null, false);
+      }
+      let salt = user[saltFieldName];
+      let saltedPwd = password + salt;
+      let encryptedPwd = crypto.createHash('sha256').update(saltedPwd).digest('hex');
+      if (user.password == encryptedPwd) {
+        user = user.toObject();
+        delete user.password;
+        return done(null, user);
+      } else {
+        logger.warn(`${username} password is not correct`);
+        return done(null, false);
+      }
+    }, username, password);
+  }));
+
+  const router = new Router();
+  router.all('*', function* (next) {
+    if (this.isAuthenticated()) {
+      yield next;
+    } else if (this.request.path == loginUrl) {
+      yield passport.authenticate('local', {
+        successRedirect,
+        failureRedirect
+      });
+    } else if (this.request.path == failureRedirect) {
+      yield next;
+    }
+    else {
+      this.redirect(loginUrl);
+    }
+  });
+
   pomelo.keys = ['pomelo'];
   pomelo.use(session());
   pomelo.use(passport.initialize());

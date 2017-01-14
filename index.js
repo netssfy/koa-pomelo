@@ -19,7 +19,13 @@ const passport = require('./middlewares/passport');
 
 //static var
 var pomelo = koa();
-var configPath = null;
+
+function checkConfigPath(toCheckPath) {
+  for (let path of toCheckPath) {
+    let value = _.get(config, path);
+    if (value == undefined) throw path + ' is not found';
+  }
+}
 
 function* init() {
   logger.info('init pomelo');
@@ -28,54 +34,70 @@ function* init() {
 
   yield init_mongo();
   yield init_server();
+  yield init_auth();
 
   pomelo.emit('initialized');
   logger.info('init done');
 }
 
 function* init_mongo() {
-  configPath = 'mongo.connection';
-  if (!getConfig())
-    throw pathNotFound();
-  
-  let connection = config.mongo.connection;
+  const toCheckPath = [
+    'mongo.connection',
+    'mongo.options'
+  ];
 
-  configPath = 'mongo.options';
-  let options = getConfig();
-  if (!options) {
-    logger.warn(pathNotFound());
-  }
+  checkConfigPath(toCheckPath);
+  
+  const connection = config.mongo.connection;
+  const options = config.mongo.options;
 
   yield mongoose.connect(connection, options);
 }
 
 function* init_server() {
-  configPath = 'app.port';
-  if (!getConfig())
-    throw pathNotFound();
+  const toCheckPath = [
+    'server.port'
+  ];
+
+  checkConfigPath(toCheckPath);
 
   require('koa-qs')(pomelo, 'strict');
-  passport(pomelo);
+  
   pomelo.use(bp());
   pomelo.use(httpTraceLog);
   pomelo.use(errorHandler);
   pomelo.use(resultFormater);
-
-  pomelo.start = function() {
-    pomelo.listen(config.app.port, function() {
-      logger.info('pomelo is started at ' + config.app.port);
-    });
-  };
 }
 
-function pathNotFound() {
-  return configPath + ' is not found';
+function* init_auth() {
+  const toCheckPath = [
+    'auth.url.login',
+    'auth.url.success',
+    'auth.url.failure',
+    'auth.url.unauth',
+    'auth.storage.model-name',
+    'auth.storage.username-field-name',
+    'auth.storage.username-field-name',
+    'auth.storage.salt-field-name',
+  ];
+
+  checkConfigPath(toCheckPath);
+
+  passport(pomelo);
 }
 
-function getConfig() {
-  return _.get(config, configPath);
+pomelo.start = function() {
+  pomelo.listen(config.server.port, function() {
+    logger.info('pomelo is started at ' + config.server.port);
+  });
+};
+
+pomelo.init = function() {
+  co(init);
 }
 
-co(init);
+pomelo.register = function(name, obj) {
+  pomelo[name] = obj;
+}
 
 exports = module.exports = pomelo;

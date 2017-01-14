@@ -1,8 +1,23 @@
 {
   "mongo": {
-    "connection": "mongodb://localhost:27017/koa-pomelo"
+    "connection": "mongodb://localhost:27017/koa-pomelo",
+    "options": {}
   },
-  "app": {
+  "server": {
     "port": 1699
+  },
+  "auth": {
+    "url": {
+      "login": "/login",
+      "success": "/success",
+      "failure": "/failure",
+      "unauth": "/login"
+    },
+    "storage": {
+      "model-name": "User",
+      "username-field-name": "name",
+      "password-field-name": "password",
+      "salt-field-name": "salt"
+    }
   }
 }
