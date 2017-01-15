@@ -47,6 +47,10 @@ pomelo.on('initialized', function() {
     throw 'bad pomelo';
   });
 
+  router.get('/www/static/:name', function* () {
+    this.body = 'hello static ' + this.params.name;
+  });
+
   pomelo.use(router.routes());
 
   pomelo.start();

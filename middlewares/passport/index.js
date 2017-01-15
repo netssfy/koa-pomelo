@@ -10,6 +10,7 @@ const co = require('co');
 const _ = require('lodash');
 const mongoose = require('mongoose');
 const crypto = require('crypto');
+const path_to_regex = require('path-to-regexp');
 
 const loginUrl = config.auth.url.login;
 const unauthToUrl = config.auth.url.unauth;
@@ -70,8 +71,9 @@ exports = module.exports = function(pomelo, auth) {
       });
     } else if (this.request.path == failureRedirect) {
       yield next;
-    }
-    else {
+    } else if (pass_through(this.request.path)) {
+      yield next;
+    } else {
       this.redirect(loginUrl);
     }
   });
@@ -82,4 +84,15 @@ exports = module.exports = function(pomelo, auth) {
   pomelo.use(passport.session());
 
   pomelo.use(router.routes());
+};
+
+function pass_through(path) {
+  let list = _.get(config, 'auth.pass-through') || [];
+  for (let define of list) {
+    let regex = path_to_regex(define);
+    if (regex.test(path))
+      return true;
+  }
+
+  return false;
 }

@@ -18,6 +18,9 @@
       "username-field-name": "name",
       "password-field-name": "password",
       "salt-field-name": "salt"
-    }
+    },
+    "pass-through": [
+      "/www/static/*"
+    ]
   }
 }
